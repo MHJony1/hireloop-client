@@ -48,7 +48,7 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="w-full bg-gradient-to-r from-[#161622] via-[#111118] to-[#0e0e0e]">
+    <nav className="w-full bg-linear-to-r from-[#161622] via-[#111118] to-[#0e0e0e]">
       <div className="max-w-7xl mx-auto px-8 h-[68px] flex items-center justify-between">
         <Logo />
 
@@ -61,7 +61,7 @@ const Navbar = () => {
           </div>
           <div className="w-px h-5 bg-[#2e2e2e] mx-4" />
           <Link
-            href="/signin"
+            href="/auth/signin"
             className="text-[#a78bfa] hover:text-[#c4b5fd] text-sm font-medium px-2 py-1.5 transition-colors duration-150 whitespace-nowrap"
           >
             Sign In
