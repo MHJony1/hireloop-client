@@ -10,9 +10,9 @@ const navLinks = [
 ];
 
 const Logo = () => (
-  <Link href="/" className="flex items-center gap-3 flex-shrink-0">
+  <Link href="/" className="flex items-center gap-3 shrink-0">
     <div
-      className="w-[42px] h-[42px] rounded-full flex items-center justify-center flex-shrink-0"
+      className="w-10.5 h-10.5 rounded-full flex items-center justify-center shrink-0"
       style={{
         background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
       }}
@@ -49,7 +49,7 @@ const Navbar = () => {
 
   return (
     <nav className="w-full bg-linear-to-r from-[#161622] via-[#111118] to-[#0e0e0e]">
-      <div className="max-w-7xl mx-auto px-8 h-[68px] flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-8 h-17 flex items-center justify-between">
         <Logo />
 
         {/* Desktop nav */}
