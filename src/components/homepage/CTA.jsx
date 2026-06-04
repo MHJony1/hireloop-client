@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const CTA = () => {
   return (
     <section className="relative bg-black overflow-hidden py-24">
@@ -84,10 +86,10 @@ const CTA = () => {
       />
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-linear-to-t from-black to-transparent" />
 
       {/* Top fade */}
-      <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-20 bg-linear-to-b from-black to-transparent" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-6">
@@ -103,9 +105,11 @@ const CTA = () => {
         </p>
 
         <div className="flex items-center gap-3">
-          <button className="bg-white text-black text-sm font-medium px-6 py-3 rounded-xl hover:bg-gray-100 transition-all">
-            Create a free account
-          </button>
+          <Link href="/auth/signup">
+            <button className="bg-white text-black text-sm font-medium px-6 py-3 rounded-xl hover:bg-gray-100 transition-all cursor-pointer">
+              Create a free account
+            </button>
+          </Link>
           <button className="text-white text-sm font-medium px-6 py-3 rounded-xl border border-white/20 hover:bg-white/10 transition-all">
             View pricing
           </button>

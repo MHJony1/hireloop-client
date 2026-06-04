@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 const trendingTags = ['Product Designer', 'AI Engineering', 'Dev-ops Engineer'];
@@ -90,8 +90,11 @@ const Banner = () => {
   const [jobQuery, setJobQuery] = useState('');
   const [location, setLocation] = useState('');
 
-  const stars = useMemo(
-    () =>
+  // ✅ useEffect — শুধু client side এ run হবে, hydration mismatch হবে না
+  const [stars, setStars] = useState([]);
+
+  useEffect(() => {
+    setStars(
       Array.from({ length: 50 }, (_, i) => ({
         id: i,
         width: Math.random() * 1.5 + 0.8,
@@ -99,12 +102,13 @@ const Banner = () => {
         top: Math.random() * 85,
         left: Math.random() * 100,
         opacity: Math.random() * 0.4 + 0.1,
+        duration: Math.random() * 3 + 2, // ✅ duration ও এখানে generate হচ্ছে
       })),
-    [],
-  );
+    );
+  }, []);
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#060608] pt-24 pb-20 select-none">
+    <section className="relative w-full overflow-hidden bg-[#060608] pt-24 pb-4 select-none">
       {/* ── Star field ── */}
       <div className="pointer-events-none absolute inset-0 z-0">
         {stars.map((star) => (
@@ -117,7 +121,7 @@ const Banner = () => {
               top: `${star.top}%`,
               left: `${star.left}%`,
               opacity: star.opacity,
-              animationDuration: `${Math.random() * 3 + 2}s`,
+              animationDuration: `${star.duration}s`, // ✅ state থেকে নেওয়া হচ্ছে
             }}
           />
         ))}
@@ -242,12 +246,11 @@ const Banner = () => {
       </div>
 
       {/* ══════════════════════════════
-          GLOBE + OVERLAY TEXT (FIXED FOR HORIZON LOOK)
+          GLOBE + OVERLAY TEXT
          ══════════════════════════════ */}
-      <div className="relative z-10 w-full flex flex-col items-center mt-8 overflow-visible">
-        {/* কন্টেইনার বড় স্ক্রিনে অনেক চওড়া (w-[170%]) করা হয়েছে যাতে পৃথিবীটা বিশাল ও ছড়ানো দিগন্তের মতো লাগে */}
+      <div className="relative z-10 w-full flex flex-col items-center mt-2 overflow-visible">
         <div className="relative w-[170%] md:w-[140%] lg:w-[115%] max-w-[1400px] aspect-[16/10] md:aspect-[16/9] mx-auto flex flex-col items-center justify-start overflow-visible">
-          {/* গ্লোবের পেছনের নীল অ্যাটমোস্ফিয়ার গ্লো */}
+          {/* Globe atmosphere glow */}
           <div
             className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] h-[60%] pointer-events-none z-0 blur-[110px]"
             style={{
@@ -256,8 +259,8 @@ const Banner = () => {
             }}
           />
 
-          {/* "Assisting..." টেক্সট পজিশন — যা গ্লোবের উপর একদম পারফেক্টলি ভাসবে */}
-          <div className="absolute top-[28%] sm:top-[32%] md:top-[36%] z-20 pointer-events-none w-full px-4 text-center">
+          {/* Assisting text */}
+          <div className="absolute top-[20%] sm:top-[24%] md:top-[28%] z-20 pointer-events-none w-full px-4 text-center">
             <h2 className="text-white/95 text-xl sm:text-2xl md:text-[28px] font-light tracking-wide leading-snug drop-shadow-[0_4px_24px_rgba(0,0,0,0.98)]">
               Assisting over{' '}
               <span className="text-white font-medium">15,000 job seekers</span>
@@ -267,7 +270,7 @@ const Banner = () => {
             </p>
           </div>
 
-          {/* গ্লোব ইমেজ কন্টেইনার — নেগেটিভ মার্জিন ব্যালেন্স করা হয়েছে যাতে নিচের কালো অংশটি নিচে নেমে যায় */}
+          {/* Globe image */}
           <div className="relative w-full h-full z-10 mb-[-12%] sm:mb-[-15%] md:mb-[-18%]">
             <Image
               src="/images/globe.png"
@@ -287,10 +290,9 @@ const Banner = () => {
         </div>
 
         {/* ══════════════════════════════
-            STATS CARDS (EXACT MATCH)
+            STATS CARDS
            ══════════════════════════════ */}
-        {/* এখানে মডারেট নেগেটিভ মার্জিন দিয়ে কার্ডগুলোকে এমন জায়গায় রাখা হয়েছে যাতে গ্লোবের গায়ের কালো অংশ একদম ঢেকে যায় */}
-        <div className="relative z-20 w-full max-w-[1040px] mx-auto px-4 -mt-[14%] sm:-mt-[16%] md:-mt-[20%] lg:-mt-[22%] grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative z-20 w-full max-w-[1040px] mx-auto px-4 -mt-[18%] sm:-mt-[20%] md:-mt-[24%] lg:-mt-[26%] grid grid-cols-2 lg:grid-cols-4 gap-4 pb-6">
           {stats.map((stat) => (
             <div
               key={stat.label}
