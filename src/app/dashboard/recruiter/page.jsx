@@ -1,37 +1,126 @@
 'use client';
+
 import React from 'react';
 import { useSession } from '@/lib/auth-client';
 
-const StatCard = ({ icon, title, value }) => {
+/* ─────────────────────────────────────────
+   THEME TOKENS
+───────────────────────────────────────── */
+const T = {
+  bg: '#0f0f1a',
+  surface: '#16162a',
+  surfaceHover: '#1e1e35',
+  border: '#2a2a45',
+  purple: '#7C3AED',
+  purpleLight: '#9F67FA',
+  text: '#e2e2f0',
+  textMuted: '#6b6b8a',
+  textSub: '#9494b8',
+  badge: '#13132a',
+};
+
+/* ─────────────────────────────────────────
+   STAT CARD
+───────────────────────────────────────── */
+const ACCENT_COLORS = [
+  { icon: '#7C3AED', iconBg: '#7C3AED18', glow: '#7C3AED33' }, // purple
+  { icon: '#34d47a', iconBg: '#34d47a18', glow: '#34d47a22' }, // green
+  { icon: '#9F67FA', iconBg: '#9F67FA18', glow: '#9F67FA22' }, // purple-light
+  { icon: '#f56580', iconBg: '#f5658018', glow: '#f5658022' }, // rose
+];
+
+const StatCard = ({ icon, title, value, accentIdx = 0 }) => {
+  const acc = ACCENT_COLORS[accentIdx % ACCENT_COLORS.length];
   return (
-    <div className="bg-[#121212] p-6 rounded-xl border border-neutral-800/60 flex flex-col gap-6 min-w-[240px] w-full">
-      {/* Icon Wrapper */}
-      <div className="bg-[#242426] p-2.5 rounded-lg w-fit flex items-center justify-center text-neutral-400">
+    <div
+      className="flex flex-col gap-5 p-5 rounded-2xl transition-all duration-200 cursor-default"
+      style={{
+        background: T.surface,
+        border: `1px solid ${T.border}`,
+        boxShadow: '0 4px 24px #00000033',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = acc.icon + '66';
+        e.currentTarget.style.boxShadow = `0 4px 28px ${acc.glow}`;
+        e.currentTarget.style.background = T.surfaceHover;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = T.border;
+        e.currentTarget.style.boxShadow = '0 4px 24px #00000033';
+        e.currentTarget.style.background = T.surface;
+      }}
+    >
+      {/* Icon */}
+      <div
+        className="p-2.5 rounded-xl w-fit"
+        style={{
+          background: acc.iconBg,
+          color: acc.icon,
+          border: `1px solid ${acc.icon}33`,
+        }}
+      >
         {icon}
       </div>
 
       {/* Content */}
-      <div className="flex flex-col gap-2">
-        <p className="text-neutral-400 text-sm font-medium tracking-wide">
+      <div className="flex flex-col gap-1">
+        <p
+          className="text-xs font-semibold uppercase tracking-widest"
+          style={{ color: T.textMuted }}
+        >
           {title}
         </p>
-        <p className="text-white text-4xl font-semibold tracking-tight">
+        <p
+          className="text-4xl font-bold tracking-tight"
+          style={{ color: T.text }}
+        >
           {value}
         </p>
       </div>
+
+      {/* Bottom accent line */}
+      <div
+        className="h-[2px] rounded-full w-10"
+        style={{ background: `linear-gradient(90deg,${acc.icon},transparent)` }}
+      />
     </div>
   );
 };
 
+/* ─────────────────────────────────────────
+   SKELETON CARD
+───────────────────────────────────────── */
+const SkeletonCard = () => (
+  <div
+    className="flex flex-col gap-5 p-5 rounded-2xl"
+    style={{ background: T.surface, border: `1px solid ${T.border}` }}
+  >
+    <div
+      className="w-10 h-10 rounded-xl animate-pulse"
+      style={{ background: T.border }}
+    />
+    <div className="flex flex-col gap-2">
+      <div
+        className="h-3 w-24 rounded-md animate-pulse"
+        style={{ background: T.border }}
+      />
+      <div
+        className="h-9 w-16 rounded-md animate-pulse"
+        style={{ background: T.border }}
+      />
+    </div>
+    <div
+      className="h-[2px] w-10 rounded-full animate-pulse"
+      style={{ background: T.border }}
+    />
+  </div>
+);
+
+/* ─────────────────────────────────────────
+   MAIN PAGE
+───────────────────────────────────────── */
 const RecruiterDashboardPage = () => {
   const { data: session, isPending } = useSession();
-
-  if (isPending) {
-    return (
-      <div className="text-white p-10 bg-black min-h-screen">Loading...</div>
-    );
-  }
-
   const user = session?.user;
 
   const stats = [
@@ -118,24 +207,69 @@ const RecruiterDashboardPage = () => {
   ];
 
   return (
-    <div className="bg-black min-h-screen p-8 font-sans antialiased selection:bg-neutral-800">
-      {/* Header */}
-      <div className="mb-10">
-        <h2 className="text-3xl font-medium text-white tracking-tight">
-          Welcome back, {user?.name || 'Alex Sterling'}
-        </h2>
+    <div
+      className="min-h-screen p-8 font-sans antialiased"
+      style={{ background: T.bg }}
+    >
+      {/* ── Top accent line ── */}
+      <div
+        className="fixed top-0 left-0 right-0 h-[2px] z-50 pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg,transparent,${T.purple},${T.purpleLight},transparent)`,
+        }}
+      />
+
+      {/* ── Header ── */}
+      <div className="mb-10 flex flex-col gap-1">
+        {isPending ? (
+          <>
+            <div
+              className="h-5 w-32 rounded-md animate-pulse mb-2"
+              style={{ background: T.border }}
+            />
+            <div
+              className="h-8 w-64 rounded-md animate-pulse"
+              style={{ background: T.border }}
+            />
+          </>
+        ) : (
+          <>
+            <p
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: T.textMuted }}
+            >
+              Recruiter Dashboard
+            </p>
+            <h2
+              className="text-3xl font-bold tracking-tight"
+              style={{ color: T.text }}
+            >
+              Welcome back,{' '}
+              <span style={{ color: T.purpleLight }}>
+                {user?.name?.split(' ')[0] || 'Alex'}
+              </span>{' '}
+              👋
+            </h2>
+            <p className="text-sm mt-0.5" style={{ color: T.textMuted }}>
+              Here&apos;s what&apos;s happening with your job postings today.
+            </p>
+          </>
+        )}
       </div>
 
-      {/* Responsive Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-350">
-        {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            icon={stat.icon}
-            title={stat.title}
-            value={stat.value}
-          />
-        ))}
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl">
+        {isPending
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+          : stats.map((stat, i) => (
+              <StatCard
+                key={i}
+                icon={stat.icon}
+                title={stat.title}
+                value={stat.value}
+                accentIdx={i}
+              />
+            ))}
       </div>
     </div>
   );

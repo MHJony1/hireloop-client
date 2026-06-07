@@ -1,299 +1,429 @@
-// 'use client';
-// import React from 'react';
-// import Image from 'next/image';
-// import { useSession } from '@/lib/auth-client';
-// import {
-//   Gear,
-//   LayoutHeaderCellsLarge,
-//   Briefcase,
-//   FolderOpen,
-//   ChevronsUpWide,
-//   LayoutSideContent,
-// } from '@gravity-ui/icons';
-// import { Button, Drawer } from '@heroui/react';
+'use client';
 
-// export function DashboardSidebar() {
-//   const { data: session, isPending } = useSession();
-//   const user = session?.user;
-
-//   const navItems = [
-//     { icon: LayoutHeaderCellsLarge, label: 'Dashboard', active: true },
-//     { icon: ChevronsUpWide, label: 'My Company' },
-//     { icon: Briefcase, label: 'Manage Jobs' },
-//     { icon: FolderOpen, label: 'Applications' },
-//     { icon: Gear, label: 'Settings' },
-//   ];
-
-//   const navContent = (
-//     <div className="flex flex-col h-full bg-[#09090b] text-zinc-400 font-sans select-none">
-//       {/* Top User Profile Section */}
-//       <div className="p-5 flex flex-col gap-3 border-b border-zinc-800/50">
-//         <div className="flex items-center gap-3">
-//           {user?.image ? (
-//             <div className="relative h-11 w-11 shrink-0 rounded-full overflow-hidden border border-zinc-700 bg-zinc-900">
-//               <Image
-//                 src={user.image}
-//                 alt={user?.name || 'User profile picture'}
-//                 fill 
-//                 sizes="44px"
-//                 className="object-cover object-center" 
-//                 priority
-//               />
-//             </div>
-//           ) : (
-//             <div className="size-11 shrink-0 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 text-white font-medium">
-//               {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
-//             </div>
-//           )}
-
-//           {/* User Name & Role */}
-//           <div className="flex flex-col min-w-0">
-//             <span className="text-white text-md font-semibold truncate tracking-tight">
-//               {isPending ? 'Loading...' : user?.name || 'Alex Sterling'}
-//             </span>
-//             <span className="text-zinc-500 text-xs font-medium">Recruiter</span>
-//           </div>
-//         </div>
-
-//         {/* Premium Account Badge */}
-//         <div className="bg-[#242427] text-zinc-300 border border-zinc-700/60 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded w-fit">
-//           Premium Account
-//         </div>
-//       </div>
-
-//       {/* Navigation Items Link List */}
-//       <nav className="flex flex-col gap-1 p-3 pt-4">
-//         {navItems.map((item) => (
-//           <button
-//             key={item.label}
-//             className={`flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium transition-all relative w-full group text-left ${
-//               item.active
-//                 ? 'text-white bg-[#1c1c1e]'
-//                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50'
-//             }`}
-//             type="button"
-//           >
-//             {/* Active Indication Vertical Bar on Right Side */}
-//             {item.active && (
-//               <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-white rounded-l-md" />
-//             )}
-
-//             <item.icon
-//               className={`size-[18px] transition-colors ${
-//                 item.active
-//                   ? 'text-white'
-//                   : 'text-zinc-500 group-hover:text-zinc-400'
-//               }`}
-//             />
-
-//             <span>{item.label}</span>
-//           </button>
-//         ))}
-//       </nav>
-//     </div>
-//   );
-
-//   return (
-//     <>
-//       {/* Desktop View Sidebar */}
-//       <aside className="hidden w-64 shrink-0 border-r border-zinc-800/80 bg-[#09090b] lg:block h-screen sticky top-0">
-//         {navContent}
-//       </aside>
-
-//       {/* HeroUI Mobile View Drawer */}
-//       <Drawer>
-//         <Button className="lg:hidden" variant="secondary">
-//           <LayoutSideContent />
-//           Sidebar
-//         </Button>
-//         <Drawer.Backdrop>
-//           <Drawer.Content
-//             placement="left"
-//             className="p-0 bg-[#09090b] border-r border-zinc-800"
-//           >
-//             <Drawer.Dialog>
-//               <Drawer.CloseTrigger className="text-zinc-400 hover:text-white" />
-//               <Drawer.Header className="border-b border-zinc-800/60">
-//                 <Drawer.Heading className="text-white">
-//                   Navigation
-//                 </Drawer.Heading>
-//               </Drawer.Header>
-//               <Drawer.Body className="p-0">{navContent}</Drawer.Body>
-//             </Drawer.Dialog>
-//           </Drawer.Content>
-//         </Drawer.Backdrop>
-//       </Drawer>
-//     </>
-//   );
-// }
-
-
-
-
-
-
-"use client";
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSession } from '@/lib/auth-client';
-// আপনার প্রোভাইড করা ভ্যালিড Gravity UI Icons
-import { 
-  Gear, 
-  LayoutHeaderCellsLarge, 
-  Briefcase, 
-  FolderOpen, 
-  ChevronsUpWide, 
-  LayoutSideContent 
+import {
+  Gear,
+  LayoutHeaderCellsLarge,
+  Briefcase,
+  FolderOpen,
+  ChevronsUpWide,
+  FolderPlus,
 } from '@gravity-ui/icons';
-import { Button, Drawer } from '@heroui/react';
 
+/* ─────────────────────────────────────────
+   THEME TOKENS
+───────────────────────────────────────── */
+const T = {
+  sidebar: '#0d0d1a',
+  sidebarBorder: '#1e1e35',
+  activeItem: '#16162e',
+  hoverItem: '#12122299',
+  purple: '#7C3AED',
+  purpleLight: '#9F67FA',
+  purpleGlow: '#7C3AED33',
+  text: '#e2e2f0',
+  textMuted: '#6b6b8a',
+  textSub: '#9494b8',
+  badge: '#13132a',
+  badgeBorder: '#2a2a45',
+};
+
+/* ─────────────────────────────────────────
+   NAV ITEMS  (href = recruiter dashboard)
+───────────────────────────────────────── */
+const NAV_ITEMS = [
+  {
+    icon: LayoutHeaderCellsLarge,
+    label: 'Dashboard',
+    href: '/dashboard/recruiter',
+  },
+  {
+    icon: ChevronsUpWide,
+    label: 'My Company',
+    href: '/dashboard/recruiter/company',
+  },
+  {
+    icon: Briefcase,
+    label: 'Manage Jobs',
+    href: '/dashboard/recruiter/jobs',
+  },
+  {
+    icon: FolderPlus,
+    label: 'Create Job',
+    href: '/dashboard/recruiter/jobs/new',
+  },
+  {
+    icon: FolderOpen,
+    label: 'Applications',
+    href: '/dashboard/recruiter/applications',
+  },
+  {
+    icon: Gear,
+    label: 'Settings',
+    href: '/dashboard/recruiter/settings',
+  },
+];
+
+/* ─────────────────────────────────────────
+   SINGLE NAV LINK
+───────────────────────────────────────── */
+const NavLink = ({ item, pathname, onClick }) => {
+  // exact match for dashboard root, startsWith for nested pages
+  const isActive =
+    item.href === '/dashboard/recruiter'
+      ? pathname === item.href
+      : pathname.startsWith(item.href);
+
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className="relative flex items-center gap-3 w-full rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 group no-underline"
+      style={{
+        background: isActive ? T.activeItem : 'transparent',
+        color: isActive ? T.text : T.textMuted,
+        border: isActive
+          ? `1px solid ${T.sidebarBorder}`
+          : '1px solid transparent',
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.background = T.hoverItem;
+          e.currentTarget.style.color = T.textSub;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.background = 'transparent';
+          e.currentTarget.style.color = T.textMuted;
+        }
+      }}
+    >
+      {/* Left glow bar */}
+      {isActive && (
+        <span
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.75 h-5 rounded-r-full"
+          style={{
+            background: `linear-gradient(180deg,${T.purple},${T.purpleLight})`,
+            boxShadow: `0 0 8px ${T.purple}`,
+          }}
+        />
+      )}
+
+      {/* Icon */}
+      <item.icon
+        style={{
+          width: 17,
+          height: 17,
+          flexShrink: 0,
+          color: isActive ? T.purpleLight : T.textMuted,
+          transition: 'color 0.15s',
+        }}
+      />
+
+      {/* Label */}
+      <span className="flex-1">{item.label}</span>
+
+      {/* Active dot */}
+      {isActive && (
+        <span
+          className="w-1.5 h-1.5 rounded-full shrink-0"
+          style={{
+            background: T.purpleLight,
+            boxShadow: `0 0 6px ${T.purple}`,
+          }}
+        />
+      )}
+    </Link>
+  );
+};
+
+/* ─────────────────────────────────────────
+   SIDEBAR INNER CONTENT
+───────────────────────────────────────── */
+const SidebarContent = ({ user, isPending, pathname, onNavClick }) => (
+  <div
+    className="flex flex-col h-full w-full select-none"
+    style={{ background: T.sidebar, color: T.textMuted }}
+  >
+    {/* ── Logo ── */}
+    <Link
+      href="/dashboard/recruiter"
+      className="px-6 pt-7 pb-6 no-underline block"
+      onClick={onNavClick}
+    >
+      <span
+        className="text-2xl font-extrabold tracking-tight"
+        style={{ color: T.text }}
+      >
+        Hire<span style={{ color: T.purpleLight }}>Loop</span>
+      </span>
+    </Link>
+
+    {/* ── User Profile Card ── */}
+    <div
+      className="mx-3 mb-4 p-3 rounded-xl"
+      style={{
+        background: T.activeItem,
+        border: `1px solid ${T.sidebarBorder}`,
+      }}
+    >
+      <div className="flex items-center gap-3">
+        {user?.image ? (
+          <div
+            className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden"
+            style={{ border: `2px solid ${T.purple}55` }}
+          >
+            <Image
+              src={user.image}
+              alt={user?.name || 'User'}
+              fill
+              sizes="40px"
+              className="object-cover"
+              priority
+            />
+          </div>
+        ) : (
+          <div
+            className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold"
+            style={{
+              background: `linear-gradient(135deg,${T.purple},${T.purpleLight})`,
+              color: '#fff',
+              boxShadow: `0 0 12px ${T.purpleGlow}`,
+            }}
+          >
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+          </div>
+        )}
+
+        <div className="flex flex-col min-w-0">
+          <span
+            className="text-sm font-semibold truncate"
+            style={{ color: T.text }}
+          >
+            {isPending ? 'Loading...' : user?.name || 'Alex Sterling'}
+          </span>
+          <span className="text-xs" style={{ color: T.textMuted }}>
+            Recruiter
+          </span>
+        </div>
+      </div>
+
+      {/* Premium badge */}
+      <div
+        className="mt-2.5 w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest"
+        style={{
+          background: T.badge,
+          border: `1px solid ${T.badgeBorder}`,
+          color: T.textSub,
+        }}
+      >
+        Premium Account
+      </div>
+    </div>
+
+    {/* ── Nav section label ── */}
+    <p
+      className="px-6 mb-2 text-[10px] font-semibold uppercase tracking-widest"
+      style={{ color: T.textMuted }}
+    >
+      Navigation
+    </p>
+
+    {/* ── Nav links ── */}
+    <nav className="flex flex-col gap-0.5 px-3 flex-1">
+      {NAV_ITEMS.map((item) => (
+        <NavLink
+          key={item.href}
+          item={item}
+          pathname={pathname}
+          onClick={onNavClick}
+        />
+      ))}
+    </nav>
+
+    {/* ── Bottom version tag ── */}
+    <div
+      className="mx-3 mb-4 px-3 py-2.5 rounded-xl flex items-center justify-between"
+      style={{
+        background: T.badge,
+        border: `1px solid ${T.badgeBorder}`,
+      }}
+    >
+      <span className="text-xs" style={{ color: T.textMuted }}>
+        HireLoop v2.0
+      </span>
+      <span
+        className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+        style={{
+          background: `${T.purple}22`,
+          color: T.purpleLight,
+          border: `1px solid ${T.purple}44`,
+        }}
+      >
+        PRO
+      </span>
+    </div>
+  </div>
+);
+
+/* ─────────────────────────────────────────
+   MAIN EXPORT
+───────────────────────────────────────── */
 export function DashboardSidebar() {
   const { data: session, isPending } = useSession();
   const user = session?.user;
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  // মোবাইল ড্রয়ারের ওপেন/ক্লোজ স্টেট ম্যানেজমেন্ট
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  const navItems = [
-    { icon: LayoutHeaderCellsLarge, label: 'Dashboard', active: true },
-    { icon: ChevronsUpWide, label: 'My Company' },
-    { icon: Briefcase, label: 'Manage Jobs' },
-    { icon: FolderOpen, label: 'Applications' },
-    { icon: Gear, label: 'Settings' },
-  ];
-
-  // সাইডবারের মূল ভেতরের কন্টেন্ট (যা ডেক্সটপ ও মোবাইল ড্রয়ার দুই জায়গাতেই রেন্ডার হবে)
-  const navContent = (
-    <div className="flex flex-col h-full bg-[#0c0c0e] text-zinc-400 font-sans select-none w-full">
-      
-      {/* 1. Brand Logo Area (image_d952b7.png স্ক্রিনশট অনুযায়ী) */}
-      <div className="px-6 pt-7 pb-5">
-        <span className="text-white font-bold text-2xl tracking-tight block">
-          Hire<span className="text-white">Loop</span>
-        </span>
-      </div>
-
-      {/* 2. User Profile Info Box */}
-      <div className="px-6 py-4 flex flex-col gap-3 border-b border-zinc-900">
-        <div className="flex items-center gap-3">
-          {/* প্রোফাইল ইমেজ কন্টেইনার (ফিক্সড ও অপ্টিমাইজড) */}
-          {user?.image ? (
-            <div className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden border border-zinc-800 bg-zinc-900">
-              <Image 
-                src={user.image} 
-                alt={user?.name || "User profile picture"} 
-                fill 
-                sizes="40px"
-                className="object-cover object-center"
-                priority
-              />
-            </div>
-          ) : (
-            <div className="size-10 shrink-0 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-800 text-white font-semibold text-sm">
-              {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
-            </div>
-          )}
-          
-          {/* User Name & Designation */}
-          <div className="flex flex-col min-w-0">
-            <span className="text-white text-sm font-semibold truncate tracking-tight">
-              {isPending ? "Loading..." : (user?.name || "Alex Sterling")}
-            </span>
-            <span className="text-zinc-500 text-xs">
-              Recruiter
-            </span>
-          </div>
-        </div>
-
-        {/* Premium Account Label Badge */}
-        <div className="bg-[#1c1c1e] text-zinc-400 border border-zinc-800 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded w-fit">
-          Premium Account
-        </div>
-      </div>
-
-      {/* 3. Navigation Links Map List */}
-      <nav className="flex flex-col gap-1 p-3 pt-5 flex-1">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={`flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium transition-all relative w-full group text-left ${
-              item.active 
-                ? 'text-white bg-[#1c1c1e]' 
-                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40'
-            }`}
-            type="button"
-            onClick={() => setIsOpen(false)} // মোবাইল লিংকে ক্লিক করলে ড্রয়ার বন্ধ হবে
-          >
-            {/* Active Item Vertical Right indicator bar */}
-            {item.active && (
-              <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-white rounded-l-md" />
-            )}
-            
-            <item.icon 
-              className={`size-[18px] transition-colors ${
-                item.active ? 'text-white' : 'text-zinc-600 group-hover:text-zinc-400'
-              }`} 
-            />
-            
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
+  // Close drawer on route change
+  React.useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
     <>
-      {/* ----------------- [ DESKTOP VIEW SIDEBAR ] ----------------- */}
-      <aside className="hidden lg:block w-64 shrink-0 border-r border-zinc-900 bg-[#0c0c0e] h-screen sticky top-0 z-30">
-        {navContent}
+      {/* ════════ DESKTOP SIDEBAR ════════ */}
+      <aside
+        className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 z-30"
+        style={{
+          background: T.sidebar,
+          borderRight: `1px solid ${T.sidebarBorder}`,
+        }}
+      >
+        <SidebarContent
+          user={user}
+          isPending={isPending}
+          pathname={pathname}
+          onNavClick={() => {}}
+        />
       </aside>
 
+      {/* ════════ MOBILE TOP BAR ════════ */}
+      <div
+        className="lg:hidden w-full flex items-center justify-between px-4 py-3 sticky top-0 z-40"
+        style={{
+          background: T.sidebar,
+          borderBottom: `1px solid ${T.sidebarBorder}`,
+          boxShadow: '0 2px 16px #00000055',
+        }}
+      >
+        <Link href="/dashboard/recruiter" className="no-underline">
+          <span
+            className="text-lg font-extrabold tracking-tight"
+            style={{ color: T.text }}
+          >
+            Hire<span style={{ color: T.purpleLight }}>Loop</span>
+          </span>
+        </Link>
 
-      {/* ----------------- [ MOBILE RESPONSIVE TOP NAVBAR ] ----------------- */}
-      {/* বড় স্ক্রিনে এটি ইনভিজিবল থাকবে, মোবাইলে একটি ক্লিন ডার্ক টপ-বার হিসেবে লুপ ব্যাকগ্রাউন্ডে রেডি থাকবে */}
-      <div className="lg:hidden w-full flex items-center justify-between p-4 bg-[#0c0c0e] border-b border-zinc-900 sticky top-0 z-40">
-        {/* লোগো */}
-        <span className="text-white font-bold text-xl tracking-tight">
-          HireLoop
-        </span>
-
-        {/* হ্যামবার্গার ট্রিগার বাটন (HeroUI Button স্ট্রাকচার অপরিবর্তিত) */}
-        <Button 
-          className="bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-xl px-3 h-9 min-w-0" 
-          variant="flat"
-          onPress={() => setIsOpen(true)}
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="p-2 rounded-xl transition-all"
+          style={{
+            background: T.activeItem,
+            border: `1px solid ${T.sidebarBorder}`,
+            color: T.textSub,
+          }}
+          aria-label="Open menu"
         >
-          <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
-        </Button>
+        </button>
       </div>
 
+      {/* ════════ MOBILE DRAWER ════════ */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-50 lg:hidden"
+            style={{
+              background: 'rgba(0,0,0,0.72)',
+              backdropFilter: 'blur(4px)',
+            }}
+            onClick={() => setMobileOpen(false)}
+          />
 
-      {/* ----------------- [ HEROUI MOBILE DRAWER PANEL ] ----------------- */}
-      <Drawer isOpen={isOpen} onOpenChange={setIsOpen}>
-        <Drawer.Backdrop className="bg-black/75 backdrop-blur-sm" />
-        <Drawer.Content 
-          placement="left" 
-          className="p-0 bg-[#0c0c0e] max-w-[270px] h-full border-r border-zinc-900 rounded-none shadow-2xl"
-        >
-          <Drawer.Dialog className="bg-[#0c0c0e] h-full flex flex-col p-0 rounded-none outline-none">
-            {/* ড্রয়ার ক্লোজ হেডার এরিয়া */}
-            <div className="flex items-center justify-end p-4 border-b border-zinc-900/60 bg-[#0c0c0e]">
-              <Drawer.CloseTrigger 
-                className="text-zinc-500 hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-zinc-900/60" 
-                onClick={() => setIsOpen(false)}
+          {/* Panel */}
+          <div
+            className="fixed top-0 left-0 h-full z-50 lg:hidden flex flex-col"
+            style={{
+              width: 270,
+              background: T.sidebar,
+              borderRight: `1px solid ${T.sidebarBorder}`,
+              boxShadow: '4px 0 32px #00000066',
+              animation: 'slideIn 0.22s cubic-bezier(0.22,1,0.36,1)',
+            }}
+          >
+            {/* Close header */}
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: `1px solid ${T.sidebarBorder}` }}
+            >
+              <span
+                className="text-base font-extrabold"
+                style={{ color: T.text }}
+              >
+                Hire<span style={{ color: T.purpleLight }}>Loop</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="p-1.5 rounded-lg"
+                style={{ color: T.textMuted, background: T.activeItem }}
+                aria-label="Close menu"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <SidebarContent
+                user={user}
+                isPending={isPending}
+                pathname={pathname}
+                onNavClick={() => setMobileOpen(false)}
               />
             </div>
-            
-            {/* ড্রয়ার বডি */}
-            <Drawer.Body className="p-0 flex-1 bg-[#0c0c0e] overflow-y-auto">
-              {navContent}
-            </Drawer.Body>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer>
+          </div>
+        </>
+      )}
+
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(-100%); opacity: 0; }
+          to   { transform: translateX(0);     opacity: 1; }
+        }
+      `}</style>
     </>
   );
 }

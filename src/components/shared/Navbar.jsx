@@ -8,7 +8,7 @@ import { authClient, useSession } from '@/lib/auth-client';
 
 const navLinks = [
   { label: 'Browse Jobs', href: '/jobs' },
-  { label: 'Company', href: '/company' },
+  { label: 'Company', href: '/companies' },
   { label: 'Pricing', href: '/pricing' },
 ];
 
@@ -147,7 +147,7 @@ const UserMenu = ({ user, onSignOut }) => {
           {/* Menu items */}
           <div className="py-1.5">
             <Link
-              href="/dashboard"
+              href="/dashboard/recruiter"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#cccccc] hover:text-white hover:bg-white/5 transition-colors"
             >

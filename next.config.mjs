@@ -20,6 +20,12 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com', // GitHub OAuth
       },
+         {
+        protocol: 'https',
+        hostname: 'i.ibb.co.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

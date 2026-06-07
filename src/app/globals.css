@@ -2,3 +2,15 @@
 @import "@heroui/styles"; 
 
 
+@import "tailwindcss";
+@import "@heroui/styles";
+ 
+/* ── HeroUI light theme override ── */
+body {
+  background-color: #0d0d0d !important;
+  color: #ffffff;
+}
+ 
+html {
+  background-color: #0d0d0d !important;
+}
