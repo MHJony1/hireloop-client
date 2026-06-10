@@ -1,4 +1,6 @@
 import { serverFetch } from '../core/server';
+
+
  
 export const getRecruiterCompany = async (recruiterId) => {
   if (!recruiterId) return null;
@@ -14,7 +16,7 @@ export const getRecruiterCompany = async (recruiterId) => {
  
 export const getAllCompanies = async () => {
   try {
-    const response = await serverFetch('/api/companies');
+    const response = await serverFetch('/api/companies-with-emails');
     return response?.data ?? response ?? [];
   } catch (error) {
     console.error('Error fetching companies:', error);

@@ -76,7 +76,6 @@ const inputCls =
   'focus:outline-none transition-all duration-200 backdrop-blur-sm';
 
 export default function CompanyProfile({ recruiter, recruiterCompany }) {
-  // MongoDB document কে plain object এ normalize করা
   const normalizeCompany = (c) => {
     if (!c) return null;
     return {

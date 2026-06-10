@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Fieldset,
@@ -15,36 +15,110 @@ import {
   Button,
 } from '@heroui/react';
 import { Briefcase, Globe } from '@gravity-ui/icons';
+import {
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Building2,
+  MapPin,
+  DollarSign,
+  Calendar,
+  FileText,
+  Users,
+  Award,
+  RefreshCw,
+} from 'lucide-react';
 import { createJob } from '@/lib/actions/jobs';
 import { redirect } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { getRecruiterCompany } from '@/lib/api/companies';
 
-export default function PostJobForm({ company }) {
+export default function PostJobForm({ company: initialCompany }) {
   const [isRemote, setIsRemote] = useState(false);
   const [errors, setErrors] = useState({});
+  const [company, setCompany] = useState(initialCompany);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Theme colors matching your dashboard
   const theme = {
-    bg: '#0f0f1a', // Page background
-    surface: '#16162a', // Card background
-    surfaceHover: '#1e1e35', // Hover state
-    border: '#2a2a45', // Borders
-    headerBg: '#13132280', // Header background
-    purple: '#7C3AED', // Primary purple
-    purpleLight: '#9F67FA', // Light purple
-    text: '#e2e2f0', // Main text
-    textMuted: '#6b6b8a', // Muted text
-    textSub: '#9494b8', // Subtle text
-    inputBg: '#1c1c1e', // Input background
-    inputBorder: '#2a2a45', // Input border
+    bg: '#0f0f1a',
+    surface: '#16162a',
+    surfaceHover: '#1e1e35',
+    border: '#2a2a45',
+    headerBg: '#13132280',
+    purple: '#7C3AED',
+    purpleLight: '#9F67FA',
+    text: '#e2e2f0',
+    textMuted: '#6b6b8a',
+    textSub: '#9494b8',
+    inputBg: '#1c1c1e',
+    inputBorder: '#2a2a45',
   };
+
+  // Refresh company data function
+  const refreshCompanyData = async () => {
+    setIsRefreshing(true);
+    try {
+      const updatedCompany = await getRecruiterCompany(company.recruiterId);
+      if (updatedCompany) {
+        setCompany(updatedCompany);
+        toast.success('Company status refreshed!');
+      }
+    } catch (error) {
+      console.error('Error refreshing company:', error);
+      toast.error('Failed to refresh company data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Status configuration
+  const statusConfig = {
+    pending: {
+      label: 'Pending Approval',
+      icon: Clock,
+      color: '#f59e0b',
+      bg: 'rgba(245, 158, 11, 0.1)',
+      border: 'rgba(245, 158, 11, 0.3)',
+      message:
+        'Your company is pending admin approval. You cannot post jobs until approved.',
+      canPost: false,
+    },
+    approved: {
+      label: 'Approved',
+      icon: CheckCircle,
+      color: '#10b981',
+      bg: 'rgba(16, 185, 129, 0.1)',
+      border: 'rgba(16, 185, 129, 0.3)',
+      message: 'Your company is approved. You can now post jobs.',
+      canPost: true,
+    },
+    rejected: {
+      label: 'Rejected',
+      icon: XCircle,
+      color: '#ef4444',
+      bg: 'rgba(239, 68, 68, 0.1)',
+      border: 'rgba(239, 68, 68, 0.3)',
+      message:
+        'Your company profile has been rejected. Please contact support.',
+      canPost: false,
+    },
+  };
+
+  const companyStatus = company?.status?.toLowerCase() || 'pending';
+  const status = statusConfig[companyStatus] || statusConfig.pending;
+  const StatusIcon = status.icon;
+  const canPostJobs = status.canPost;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (company.isApproved === false) {
+    if (!canPostJobs) {
       toast.error(
-        'Your company profile must be approved before you can post jobs.',
+        status.message ||
+          'Your company must be approved before you can post jobs.',
       );
       return;
     }
@@ -72,6 +146,7 @@ export default function PostJobForm({ company }) {
     }
 
     setErrors({});
+    setIsLoading(true);
 
     const now = new Date();
     const formattedDate = now.toISOString().slice(0, 23) + 'Z';
@@ -80,8 +155,8 @@ export default function PostJobForm({ company }) {
       jobTitle: data.jobTitle,
       jobCategory: data.jobCategory,
       jobType: data.jobType,
-      minSalary: data.minSalary,
-      maxSalary: data.maxSalary,
+      minSalary: Number(data.minSalary),
+      maxSalary: Number(data.maxSalary),
       currency: data.currency || 'EUR',
       location: data.location,
       deadline: data.deadline,
@@ -92,7 +167,7 @@ export default function PostJobForm({ company }) {
       companyId: company._id,
       companyName: company.name,
       companyLogo: company.logo,
-      status: 'active',
+      companyStatus: company.status,
       isPubliclyVisible: true,
       createdAt: {
         date: formattedDate,
@@ -113,16 +188,23 @@ export default function PostJobForm({ company }) {
     } catch (error) {
       console.error('Error posting job:', error);
       toast.error('Failed to post job. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Updated styles with dashboard theme
-  const textInputClass = `w-full text-white bg-[${theme.inputBg}] border border-[${theme.inputBorder}] hover:bg-[${theme.surfaceHover}] focus:border-[${theme.purple}] rounded-lg h-12 px-3 text-sm placeholder:text-[${theme.textMuted}] outline-none transition-all`;
-  const textAreaClass = `w-full text-white bg-[${theme.inputBg}] border border-[${theme.inputBorder}] hover:bg-[${theme.surfaceHover}] focus:border-[${theme.purple}] rounded-lg p-3 text-sm placeholder:text-[${theme.textMuted}] outline-none transition-all`;
+  const textInputClass = `w-full text-white rounded-lg h-12 px-3 text-sm placeholder:text-gray-500 outline-none transition-all focus:ring-2 focus:ring-[#7C3AED]/50`;
+  const textAreaClass = `w-full text-white rounded-lg p-3 text-sm placeholder:text-gray-500 outline-none transition-all focus:ring-2 focus:ring-[#7C3AED]/50`;
 
-  const triggerClasses = `w-full flex items-center justify-between bg-[${theme.inputBg}] border border-[${theme.inputBorder}] hover:bg-[${theme.surfaceHover}] h-12 rounded-lg px-3 text-white transition-all text-sm outline-none data-[focused=true]:border-[${theme.purple}] data-[invalid=true]:border-danger`;
-  const popoverClasses = `bg-[${theme.surface}] border border-[${theme.border}] text-white rounded-lg shadow-xl p-1`;
-  const listItemClasses = `flex items-center justify-between p-2 rounded-md hover:bg-[${theme.surfaceHover}] cursor-pointer text-sm text-[${theme.textSub}] outline-none data-[focused=true]:bg-[${theme.surfaceHover}]`;
+  // Auto-refresh every 30 seconds if pending
+  useEffect(() => {
+    if (companyStatus === 'pending') {
+      const interval = setInterval(() => {
+        refreshCompanyData();
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [companyStatus]);
 
   return (
     <div
@@ -139,7 +221,6 @@ export default function PostJobForm({ company }) {
             boxShadow: '0 8px 32px #00000044',
           }}
         >
-          {/* subtle top accent line */}
           <div
             className="h-[2px] w-full"
             style={{
@@ -153,515 +234,558 @@ export default function PostJobForm({ company }) {
               className="border-b pb-6 mb-8"
               style={{ borderColor: theme.border }}
             >
-              <h1
-                className="text-2xl font-semibold tracking-tight"
-                style={{ color: theme.text }}
-              >
-                Post a New Job
-              </h1>
-              <p className="text-sm mt-1" style={{ color: theme.textMuted }}>
-                Fill out the details below to publish your open position.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1
+                    className="text-2xl font-semibold tracking-tight"
+                    style={{ color: theme.text }}
+                  >
+                    Post a New Job
+                  </h1>
+                  <p
+                    className="text-sm mt-1"
+                    style={{ color: theme.textMuted }}
+                  >
+                    Fill out the details below to publish your open position.
+                  </p>
+                </div>
 
-              {/* Company information panel */}
+                {/* Refresh Button */}
+                <button
+                  onClick={refreshCompanyData}
+                  disabled={isRefreshing}
+                  className="p-2 rounded-lg transition-all hover:bg-gray-800/50 disabled:opacity-50"
+                  style={{ border: `1px solid ${theme.border}` }}
+                  title="Refresh company status"
+                >
+                  <RefreshCw
+                    size={16}
+                    className={isRefreshing ? 'animate-spin' : ''}
+                    style={{ color: theme.textMuted }}
+                  />
+                </button>
+              </div>
+
+              {/* Company information panel with dynamic status */}
               <div
-                className="mt-4 flex items-center gap-3 rounded-lg px-4 py-2"
+                className="mt-4 rounded-lg px-4 py-3"
                 style={{
                   background: theme.headerBg,
                   border: `1px solid ${theme.border}`,
                 }}
               >
-                {company.logo && (
-                  <img
-                    src={company.logo}
-                    alt={company.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                    style={{ background: theme.inputBg }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                )}
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <Briefcase size={14} style={{ color: theme.textMuted }} />
-                    <span
-                      className="text-xs"
-                      style={{ color: theme.textMuted }}
-                    >
-                      Posting as:
-                    </span>
-                    <span
-                      className="font-semibold"
-                      style={{ color: theme.text }}
-                    >
-                      {company.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span
-                      className="text-[10px]"
-                      style={{ color: theme.textMuted }}
-                    >
-                      ID: {company._id}
-                    </span>
-                    {company.isApproved && (
+                <div className="flex items-center gap-3">
+                  {company.logo && (
+                    <img
+                      src={company.logo}
+                      alt={company.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                      style={{ background: theme.inputBg }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Briefcase size={14} style={{ color: theme.textMuted }} />
                       <span
-                        className="font-medium text-[10px] px-1.5 py-0.5 rounded"
+                        className="text-xs"
+                        style={{ color: theme.textMuted }}
+                      >
+                        Posting as:
+                      </span>
+                      <span
+                        className="font-semibold"
+                        style={{ color: theme.text }}
+                      >
+                        {company.name}
+                      </span>
+
+                      {/* Dynamic Status Badge */}
+                      <div
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium"
                         style={{
-                          background: '#0d2e1a',
-                          color: '#34d47a',
-                          border: '1px solid #34d47a33',
+                          background: status.bg,
+                          border: `1px solid ${status.border}`,
+                          color: status.color,
                         }}
                       >
-                        Approved
+                        <StatusIcon size={10} />
+                        {status.label}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-1">
+                      <span
+                        className="text-[10px]"
+                        style={{ color: theme.textMuted }}
+                      >
+                        ID: {company._id?.slice(-12)}
                       </span>
-                    )}
+
+                      {/* Status Message */}
+                      <div
+                        className="flex items-center gap-1.5 text-[10px]"
+                        style={{ color: status.color }}
+                      >
+                        <AlertCircle size={10} />
+                        {status.message}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Form */}
-            <Form
-              onSubmit={handleSubmit}
-              className="space-y-8"
-              validationErrors={errors}
-              validationBehavior="aria"
-            >
-              {/* SECTION 1: Job Information */}
-              <Fieldset className="space-y-6 w-full">
-                <legend
-                  className="text-lg font-medium w-full pb-2 mb-2"
+            {/* Disabled Form Overlay when company not approved */}
+            <div className="relative">
+              {!canPostJobs && (
+                <div
+                  className="absolute inset-0 rounded-xl z-10 flex items-center justify-center"
                   style={{
-                    color: theme.textSub,
-                    borderBottom: `1px solid ${theme.border}`,
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(4px)',
                   }}
                 >
-                  Job Information
-                </legend>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <TextField
-                    name="jobTitle"
-                    isInvalid={!!errors.jobTitle}
-                    className="flex flex-col gap-1 w-full"
+                  <div
+                    className="text-center p-6 max-w-sm mx-auto"
+                    style={{
+                      background: theme.surface,
+                      border: `1px solid ${status.border}`,
+                      borderRadius: '1rem',
+                    }}
                   >
-                    <Label
-                      className="font-medium text-sm"
-                      style={{ color: theme.textMuted }}
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                      style={{ background: status.bg }}
                     >
-                      Job Title
-                    </Label>
-                    <Input
-                      placeholder="e.g. Senior Frontend Engineer"
-                      className={textInputClass}
-                      style={{
-                        background: theme.inputBg,
-                        borderColor: theme.inputBorder,
-                        color: theme.text,
-                      }}
-                    />
-                    {errors.jobTitle && (
-                      <FieldError className="text-xs text-danger mt-1">
-                        {errors.jobTitle}
-                      </FieldError>
-                    )}
-                  </TextField>
-
-                  <Select
-                    className="w-full"
-                    name="jobCategory"
-                    isInvalid={!!errors.jobCategory}
-                  >
-                    <Label
-                      className="font-medium text-sm mb-1 block"
-                      style={{ color: theme.textMuted }}
-                    >
-                      Job Category
-                    </Label>
-                    <Select.Trigger
-                      className={triggerClasses}
-                      style={{ background: theme.inputBg }}
-                    >
-                      <Select.Value className="text-white" />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    {errors.jobCategory && (
-                      <span className="text-xs text-danger mt-1">
-                        {errors.jobCategory}
-                      </span>
-                    )}
-                    <Select.Popover className={popoverClasses}>
-                      <ListBox className="outline-none">
-                        <ListBox.Item
-                          id="technology"
-                          className={listItemClasses}
-                          textValue="Technology"
-                        >
-                          Technology
-                        </ListBox.Item>
-                        <ListBox.Item
-                          id="design"
-                          className={listItemClasses}
-                          textValue="Design"
-                        >
-                          Design
-                        </ListBox.Item>
-                        <ListBox.Item
-                          id="marketing"
-                          className={listItemClasses}
-                          textValue="Marketing"
-                        >
-                          Marketing
-                        </ListBox.Item>
-                        <ListBox.Item
-                          id="sales"
-                          className={listItemClasses}
-                          textValue="Sales"
-                        >
-                          Sales
-                        </ListBox.Item>
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Select
-                    className="w-full"
-                    name="jobType"
-                    isInvalid={!!errors.jobType}
-                  >
-                    <Label
-                      className="font-medium text-sm mb-1 block"
-                      style={{ color: theme.textMuted }}
-                    >
-                      Job Type
-                    </Label>
-                    <Select.Trigger
-                      className={triggerClasses}
-                      style={{ background: theme.inputBg }}
-                    >
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    {errors.jobType && (
-                      <span className="text-xs text-danger mt-1">
-                        {errors.jobType}
-                      </span>
-                    )}
-                    <Select.Popover className={popoverClasses}>
-                      <ListBox className="outline-none">
-                        <ListBox.Item
-                          id="full-time"
-                          className={listItemClasses}
-                          textValue="Full-time"
-                        >
-                          Full-time
-                        </ListBox.Item>
-                        <ListBox.Item
-                          id="part-time"
-                          className={listItemClasses}
-                          textValue="Part-time"
-                        >
-                          Part-time
-                        </ListBox.Item>
-                        <ListBox.Item
-                          id="contract"
-                          className={listItemClasses}
-                          textValue="Contract"
-                        >
-                          Contract
-                        </ListBox.Item>
-                        <ListBox.Item
-                          id="internship"
-                          className={listItemClasses}
-                          textValue="Internship"
-                        >
-                          Internship
-                        </ListBox.Item>
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-2 space-y-1">
-                      <span
-                        className="font-medium text-sm block"
-                        style={{ color: theme.textMuted }}
-                      >
-                        Salary Range
-                      </span>
-                      <div className="flex gap-2">
-                        <TextField
-                          name="minSalary"
-                          isInvalid={!!errors.minSalary}
-                          className="w-full"
-                        >
-                          <Input
-                            placeholder="Min"
-                            type="number"
-                            className={textInputClass}
-                            style={{ background: theme.inputBg }}
-                          />
-                        </TextField>
-                        <TextField
-                          name="maxSalary"
-                          isInvalid={!!errors.maxSalary}
-                          className="w-full"
-                        >
-                          <Input
-                            placeholder="Max"
-                            type="number"
-                            className={textInputClass}
-                            style={{ background: theme.inputBg }}
-                          />
-                        </TextField>
-                      </div>
+                      <StatusIcon size={24} style={{ color: status.color }} />
                     </div>
-
-                    <Select
-                      className="w-full mt-6"
-                      name="currency"
-                      defaultSelectedKeys={['EUR']}
+                    <h3
+                      className="text-lg font-semibold mb-1"
+                      style={{ color: theme.text }}
                     >
-                      <Select.Trigger
-                        className={triggerClasses}
-                        style={{ background: theme.inputBg }}
+                      Company {status.label}
+                    </h3>
+                    <p
+                      className="text-sm mb-4"
+                      style={{ color: theme.textMuted }}
+                    >
+                      {status.message}
+                    </p>
+                    {companyStatus === 'pending' && (
+                      <div className="space-y-3">
+                        <p className="text-xs" style={{ color: theme.textSub }}>
+                          Please wait for admin approval. You will be notified
+                          once approved.
+                        </p>
+                        <button
+                          onClick={refreshCompanyData}
+                          disabled={isRefreshing}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all"
+                          style={{
+                            background: theme.purple + '22',
+                            color: theme.purpleLight,
+                            border: `1px solid ${theme.purple}44`,
+                          }}
+                        >
+                          <RefreshCw
+                            size={12}
+                            className={isRefreshing ? 'animate-spin' : ''}
+                          />
+                          Check Status
+                        </button>
+                      </div>
+                    )}
+                    {companyStatus === 'rejected' && (
+                      <button
+                        onClick={() => redirect('/dashboard/recruiter/company')}
+                        className="text-sm font-medium mt-2 transition-colors"
+                        style={{ color: theme.purpleLight }}
                       >
-                        <Select.Value />
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover className={popoverClasses}>
-                        <ListBox className="outline-none">
-                          <ListBox.Item
-                            id="USD"
-                            className={listItemClasses}
-                            textValue="USD"
-                          >
-                            USD ($)
-                          </ListBox.Item>
-                          <ListBox.Item
-                            id="EUR"
-                            className={listItemClasses}
-                            textValue="EUR"
-                          >
-                            EUR (€)
-                          </ListBox.Item>
-                          <ListBox.Item
-                            id="GBP"
-                            className={listItemClasses}
-                            textValue="GBP"
-                          >
-                            GBP (£)
-                          </ListBox.Item>
-                          <ListBox.Item
-                            id="BDT"
-                            className={listItemClasses}
-                            textValue="BDT"
-                          >
-                            BDT (৳)
-                          </ListBox.Item>
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
+                        Update Company Profile →
+                      </button>
+                    )}
                   </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span
+              {/* Form - disabled when not approved */}
+              <Form
+                onSubmit={handleSubmit}
+                className="space-y-8"
+                validationErrors={errors}
+                validationBehavior="aria"
+              >
+                {/* SECTION 1: Job Information */}
+                <Fieldset className="space-y-6 w-full">
+                  <legend
+                    className="text-lg font-medium w-full pb-2 mb-2"
+                    style={{
+                      color: theme.textSub,
+                      borderBottom: `1px solid ${theme.border}`,
+                    }}
+                  >
+                    Job Information
+                  </legend>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-1 w-full">
+                      <label
                         className="font-medium text-sm"
                         style={{ color: theme.textMuted }}
                       >
-                        Location
-                      </span>
-                      <Switch
-                        isSelected={isRemote}
-                        onChange={setIsRemote}
-                        size="sm"
+                        Job Title
+                      </label>
+                      <input
+                        name="jobTitle"
+                        placeholder="e.g. Senior Frontend Engineer"
+                        disabled={!canPostJobs}
+                        className={textInputClass}
+                        style={{
+                          background: theme.inputBg,
+                          border: `1px solid ${theme.inputBorder}`,
+                          color: theme.text,
+                          opacity: !canPostJobs ? 0.6 : 1,
+                        }}
+                      />
+                      {errors.jobTitle && (
+                        <p className="text-xs text-red-400 mt-1">
+                          {errors.jobTitle}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1 w-full">
+                      <label
+                        className="font-medium text-sm"
+                        style={{ color: theme.textMuted }}
                       >
-                        <Switch.Control className="bg-zinc-800 data-[selected=true]:bg-white">
-                          <Switch.Thumb className="bg-zinc-400 data-[selected=true]:bg-black" />
-                        </Switch.Control>
-                        <Switch.Content>
-                          <Label
+                        Job Category
+                      </label>
+                      <select
+                        name="jobCategory"
+                        disabled={!canPostJobs}
+                        className={textInputClass}
+                        style={{
+                          background: theme.inputBg,
+                          border: `1px solid ${theme.inputBorder}`,
+                          color: theme.text,
+                          opacity: !canPostJobs ? 0.6 : 1,
+                        }}
+                      >
+                        <option value="">Select category</option>
+                        <option value="technology">Technology</option>
+                        <option value="design">Design</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="sales">Sales</option>
+                      </select>
+                      {errors.jobCategory && (
+                        <p className="text-xs text-red-400 mt-1">
+                          {errors.jobCategory}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-1 w-full">
+                      <label
+                        className="font-medium text-sm"
+                        style={{ color: theme.textMuted }}
+                      >
+                        Job Type
+                      </label>
+                      <select
+                        name="jobType"
+                        disabled={!canPostJobs}
+                        className={textInputClass}
+                        style={{
+                          background: theme.inputBg,
+                          border: `1px solid ${theme.inputBorder}`,
+                          color: theme.text,
+                          opacity: !canPostJobs ? 0.6 : 1,
+                        }}
+                      >
+                        <option value="">Select type</option>
+                        <option value="full-time">Full-time</option>
+                        <option value="part-time">Part-time</option>
+                        <option value="contract">Contract</option>
+                        <option value="internship">Internship</option>
+                      </select>
+                      {errors.jobType && (
+                        <p className="text-xs text-red-400 mt-1">
+                          {errors.jobType}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2 space-y-1">
+                        <label
+                          className="font-medium text-sm block"
+                          style={{ color: theme.textMuted }}
+                        >
+                          Salary Range
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            name="minSalary"
+                            placeholder="Min"
+                            type="number"
+                            disabled={!canPostJobs}
+                            className={textInputClass}
+                            style={{
+                              background: theme.inputBg,
+                              border: `1px solid ${theme.inputBorder}`,
+                              opacity: !canPostJobs ? 0.6 : 1,
+                            }}
+                          />
+                          <input
+                            name="maxSalary"
+                            placeholder="Max"
+                            type="number"
+                            disabled={!canPostJobs}
+                            className={textInputClass}
+                            style={{
+                              background: theme.inputBg,
+                              border: `1px solid ${theme.inputBorder}`,
+                              opacity: !canPostJobs ? 0.6 : 1,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <select
+                          name="currency"
+                          defaultValue="EUR"
+                          disabled={!canPostJobs}
+                          className={textInputClass}
+                          style={{
+                            background: theme.inputBg,
+                            border: `1px solid ${theme.inputBorder}`,
+                            color: theme.text,
+                            opacity: !canPostJobs ? 0.6 : 1,
+                          }}
+                        >
+                          <option value="USD">USD ($)</option>
+                          <option value="EUR">EUR (€)</option>
+                          <option value="GBP">GBP (£)</option>
+                          <option value="BDT">BDT (৳)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <label
+                          className="font-medium text-sm"
+                          style={{ color: theme.textMuted }}
+                        >
+                          Location
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isRemote}
+                            onChange={(e) => setIsRemote(e.target.checked)}
+                            disabled={!canPostJobs}
+                            className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500"
+                          />
+                          <span
                             className="text-xs font-medium"
                             style={{ color: theme.textMuted }}
                           >
                             Remote
-                          </Label>
-                        </Switch.Content>
-                      </Switch>
+                          </span>
+                        </label>
+                      </div>
+
+                      <input
+                        name="location"
+                        placeholder={
+                          isRemote
+                            ? 'Global / Remote'
+                            : 'e.g. Chittagong, Dhaka'
+                        }
+                        disabled={isRemote || !canPostJobs}
+                        className={textInputClass}
+                        style={{
+                          background: theme.inputBg,
+                          border: `1px solid ${theme.inputBorder}`,
+                          opacity: isRemote || !canPostJobs ? 0.6 : 1,
+                        }}
+                      />
+                      {!isRemote && errors.location && (
+                        <p className="text-xs text-red-400 mt-1">
+                          {errors.location}
+                        </p>
+                      )}
                     </div>
 
-                    <TextField
-                      name="location"
-                      isInvalid={!isRemote && !!errors.location}
-                      className="flex flex-col gap-1 w-full relative"
-                    >
-                      <div className="relative flex items-center">
-                        <Globe
-                          size={16}
-                          className="absolute left-3 z-10"
-                          style={{ color: theme.textMuted }}
-                        />
-                        <Input
-                          placeholder={
-                            isRemote
-                              ? 'Global / Remote'
-                              : 'e.g. Chittagong, Dhaka'
-                          }
-                          disabled={isRemote}
-                          className={`${textInputClass} pl-10`}
-                          style={{ background: theme.inputBg }}
-                        />
-                      </div>
-                      {!isRemote && errors.location && (
-                        <FieldError className="text-xs text-danger mt-1">
-                          {errors.location}
-                        </FieldError>
+                    <div className="flex flex-col gap-1 w-full">
+                      <label
+                        className="font-medium text-sm"
+                        style={{ color: theme.textMuted }}
+                      >
+                        Application Deadline
+                      </label>
+                      <input
+                        type="date"
+                        name="deadline"
+                        disabled={!canPostJobs}
+                        className={textInputClass}
+                        style={{
+                          background: theme.inputBg,
+                          border: `1px solid ${theme.inputBorder}`,
+                          opacity: !canPostJobs ? 0.6 : 1,
+                        }}
+                      />
+                      {errors.deadline && (
+                        <p className="text-xs text-red-400 mt-1">
+                          {errors.deadline}
+                        </p>
                       )}
-                    </TextField>
+                    </div>
                   </div>
+                </Fieldset>
 
-                  <TextField
-                    name="deadline"
-                    isInvalid={!!errors.deadline}
-                    className="flex flex-col gap-1 w-full"
+                {/* SECTION 2: Job Description */}
+                <Fieldset className="space-y-6 w-full">
+                  <legend
+                    className="text-lg font-medium w-full pb-2 mb-2"
+                    style={{
+                      color: theme.textSub,
+                      borderBottom: `1px solid ${theme.border}`,
+                    }}
                   >
-                    <Label
+                    Job Details & Description
+                  </legend>
+
+                  <div className="flex flex-col gap-1 w-full">
+                    <label
                       className="font-medium text-sm"
                       style={{ color: theme.textMuted }}
                     >
-                      Application Deadline
-                    </Label>
-                    <Input
-                      type="date"
-                      className={textInputClass}
-                      style={{ background: theme.inputBg }}
+                      Responsibilities
+                    </label>
+                    <textarea
+                      name="responsibilities"
+                      placeholder="Outline the core everyday responsibilities for this role..."
+                      rows={4}
+                      disabled={!canPostJobs}
+                      className={textAreaClass}
+                      style={{
+                        background: theme.inputBg,
+                        border: `1px solid ${theme.inputBorder}`,
+                        opacity: !canPostJobs ? 0.6 : 1,
+                      }}
                     />
-                    {errors.deadline && (
-                      <FieldError className="text-xs text-danger mt-1">
-                        {errors.deadline}
-                      </FieldError>
+                    {errors.responsibilities && (
+                      <p className="text-xs text-red-400 mt-1">
+                        {errors.responsibilities}
+                      </p>
                     )}
-                  </TextField>
+                  </div>
+
+                  <div className="flex flex-col gap-1 w-full">
+                    <label
+                      className="font-medium text-sm"
+                      style={{ color: theme.textMuted }}
+                    >
+                      Requirements
+                    </label>
+                    <textarea
+                      name="requirements"
+                      placeholder="List required experience, skills, and certifications..."
+                      rows={4}
+                      disabled={!canPostJobs}
+                      className={textAreaClass}
+                      style={{
+                        background: theme.inputBg,
+                        border: `1px solid ${theme.inputBorder}`,
+                        opacity: !canPostJobs ? 0.6 : 1,
+                      }}
+                    />
+                    {errors.requirements && (
+                      <p className="text-xs text-red-400 mt-1">
+                        {errors.requirements}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1 w-full">
+                    <label
+                      className="font-medium text-sm"
+                      style={{ color: theme.textMuted }}
+                    >
+                      Benefits (Optional)
+                    </label>
+                    <textarea
+                      name="benefits"
+                      placeholder="Perks, healthcare, equity, remote stipends..."
+                      rows={3}
+                      disabled={!canPostJobs}
+                      className={textAreaClass}
+                      style={{
+                        background: theme.inputBg,
+                        border: `1px solid ${theme.inputBorder}`,
+                        opacity: !canPostJobs ? 0.6 : 1,
+                      }}
+                    />
+                  </div>
+                </Fieldset>
+
+                {/* Form Actions */}
+                <div
+                  className="flex justify-end gap-3 pt-4 border-t"
+                  style={{ borderColor: theme.border }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => redirect('/dashboard/recruiter/jobs')}
+                    className="rounded-lg px-6 font-medium h-11 transition-all hover:bg-gray-800"
+                    style={{
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textSub,
+                      background: 'transparent',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!canPostJobs || isLoading}
+                    className="font-semibold rounded-lg px-6 transition-all h-11 flex items-center gap-2"
+                    style={{
+                      background: !canPostJobs
+                        ? theme.textMuted
+                        : `linear-gradient(135deg,${theme.purple},${theme.purpleLight})`,
+                      color: '#fff',
+                      boxShadow: !canPostJobs
+                        ? 'none'
+                        : `0 4px 18px ${theme.purple}44`,
+                      cursor:
+                        !canPostJobs || isLoading ? 'not-allowed' : 'pointer',
+                      opacity: !canPostJobs || isLoading ? 0.5 : 1,
+                    }}
+                  >
+                    {isLoading ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      'Post Job'
+                    )}
+                  </button>
                 </div>
-              </Fieldset>
-
-              {/* SECTION 2: Job Description */}
-              <Fieldset className="space-y-6 w-full">
-                <legend
-                  className="text-lg font-medium w-full pb-2 mb-2"
-                  style={{
-                    color: theme.textSub,
-                    borderBottom: `1px solid ${theme.border}`,
-                  }}
-                >
-                  Job Details & Description
-                </legend>
-
-                <TextField
-                  name="responsibilities"
-                  isInvalid={!!errors.responsibilities}
-                  className="flex flex-col gap-1 w-full"
-                >
-                  <Label
-                    className="font-medium text-sm"
-                    style={{ color: theme.textMuted }}
-                  >
-                    Responsibilities
-                  </Label>
-                  <TextArea
-                    placeholder="Outline the core everyday responsibilities for this role..."
-                    rows={4}
-                    className={textAreaClass}
-                    style={{ background: theme.inputBg }}
-                  />
-                  {errors.responsibilities && (
-                    <FieldError className="text-xs text-danger mt-1">
-                      {errors.responsibilities}
-                    </FieldError>
-                  )}
-                </TextField>
-
-                <TextField
-                  name="requirements"
-                  isInvalid={!!errors.requirements}
-                  className="flex flex-col gap-1 w-full"
-                >
-                  <Label
-                    className="font-medium text-sm"
-                    style={{ color: theme.textMuted }}
-                  >
-                    Requirements
-                  </Label>
-                  <TextArea
-                    placeholder="List required experience, skills, and certifications..."
-                    rows={4}
-                    className={textAreaClass}
-                    style={{ background: theme.inputBg }}
-                  />
-                  {errors.requirements && (
-                    <FieldError className="text-xs text-danger mt-1">
-                      {errors.requirements}
-                    </FieldError>
-                  )}
-                </TextField>
-
-                <TextField
-                  name="benefits"
-                  className="flex flex-col gap-1 w-full"
-                >
-                  <Label
-                    className="font-medium text-sm"
-                    style={{ color: theme.textMuted }}
-                  >
-                    Benefits (Optional)
-                  </Label>
-                  <TextArea
-                    placeholder="Perks, healthcare, equity, remote stipends..."
-                    rows={3}
-                    className={textAreaClass}
-                    style={{ background: theme.inputBg }}
-                  />
-                </TextField>
-              </Fieldset>
-
-              {/* Form Actions */}
-              <div
-                className="flex justify-end gap-3 pt-4 border-t"
-                style={{ borderColor: theme.border }}
-              >
-                <Button
-                  type="button"
-                  variant="bordered"
-                  className="rounded-lg px-6 font-medium h-11"
-                  style={{
-                    borderColor: theme.border,
-                    color: theme.textSub,
-                    background: 'transparent',
-                  }}
-                  onClick={() => redirect('/dashboard/recruiter/jobs')}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="font-semibold rounded-lg px-6 transition-colors h-11"
-                  style={{
-                    background: `linear-gradient(135deg,${theme.purple},${theme.purpleLight})`,
-                    color: '#fff',
-                    boxShadow: `0 4px 18px ${theme.purple}44`,
-                  }}
-                >
-                  Post Job
-                </Button>
-              </div>
-            </Form>
+              </Form>
+            </div>
           </div>
         </div>
       </div>

@@ -13,6 +13,17 @@ import {
   ChevronsUpWide,
   FolderPlus,
 } from '@gravity-ui/icons';
+import {
+  Search,
+  Bookmark,
+  FileText,
+  CreditCard,
+  Users,
+  Building2,
+  DollarSign,
+  Settings,
+  LayoutDashboard,
+} from 'lucide-react';
 
 /* ─────────────────────────────────────────
    THEME TOKENS
@@ -33,9 +44,9 @@ const T = {
 };
 
 /* ─────────────────────────────────────────
-   NAV ITEMS  (href = recruiter dashboard)
+   NAV ITEMS
 ───────────────────────────────────────── */
-const NAV_ITEMS = [
+const recruiterNavlinks = [
   {
     icon: LayoutHeaderCellsLarge,
     label: 'Dashboard',
@@ -68,13 +79,92 @@ const NAV_ITEMS = [
   },
 ];
 
+const seekerNavlinks = [
+  {
+    icon: LayoutHeaderCellsLarge,
+    label: 'Dashboard',
+    href: '/dashboard/seeker',
+  },
+  {
+    icon: Search,
+    label: 'Jobs',
+    href: '/dashboard/seeker/jobs',
+  },
+  {
+    icon: Bookmark,
+    label: 'Saved Jobs',
+    href: '/dashboard/seeker/saved-jobs',
+  },
+  {
+    icon: FileText,
+    label: 'Applications',
+    href: '/dashboard/seeker/applications',
+  },
+  {
+    icon: CreditCard,
+    label: 'Billing',
+    href: '/dashboard/seeker/billing',
+  },
+  {
+    icon: Gear,
+    label: 'Settings',
+    href: '/dashboard/seeker/settings',
+  },
+];
+
+// ✅ Admin Navigation Items
+const adminNavlinks = [
+  {
+    icon: LayoutDashboard,
+    label: 'Dashboard',
+    href: '/dashboard/admin',
+  },
+  {
+    icon: Users,
+    label: 'Users',
+    href: '/dashboard/admin/users',
+  },
+  {
+    icon: Building2,
+    label: 'Companies',
+    href: '/dashboard/admin/companies',
+  },
+  {
+    icon: Briefcase,
+    label: 'Jobs',
+    href: '/dashboard/admin/jobs',
+  },
+  {
+    icon: DollarSign,
+    label: 'Payments',
+    href: '/dashboard/admin/payments',
+  },
+  {
+    icon: Settings,
+    label: 'Settings',
+    href: '/dashboard/admin/settings',
+  },
+];
+
+const navLinksMap = {
+  seeker: seekerNavlinks,
+  recruiter: recruiterNavlinks,
+  admin: adminNavlinks, // ✅ Admin role added
+};
+
 /* ─────────────────────────────────────────
    SINGLE NAV LINK
 ───────────────────────────────────────── */
-const NavLink = ({ item, pathname, onClick }) => {
-  // exact match for dashboard root, startsWith for nested pages
+const NavLink = ({ item, pathname, onClick, role }) => {
+  const dashboardRoot =
+    role === 'recruiter'
+      ? '/dashboard/recruiter'
+      : role === 'admin'
+        ? '/dashboard/admin'
+        : '/dashboard/seeker';
+
   const isActive =
-    item.href === '/dashboard/recruiter'
+    item.href === dashboardRoot
       ? pathname === item.href
       : pathname.startsWith(item.href);
 
@@ -145,140 +235,190 @@ const NavLink = ({ item, pathname, onClick }) => {
 /* ─────────────────────────────────────────
    SIDEBAR INNER CONTENT
 ───────────────────────────────────────── */
-const SidebarContent = ({ user, isPending, pathname, onNavClick }) => (
-  <div
-    className="flex flex-col h-full w-full select-none"
-    style={{ background: T.sidebar, color: T.textMuted }}
-  >
-    {/* ── Logo ── */}
-    <Link
-      href="/dashboard/recruiter"
-      className="px-6 pt-7 pb-6 no-underline block"
-      onClick={onNavClick}
-    >
-      <span
-        className="text-2xl font-extrabold tracking-tight"
-        style={{ color: T.text }}
-      >
-        Hire<span style={{ color: T.purpleLight }}>Loop</span>
-      </span>
-    </Link>
+const SidebarContent = ({ user, isPending, pathname, onNavClick }) => {
+  const role = user?.role || 'seeker';
+  const navItems = navLinksMap[role] ?? seekerNavlinks;
 
-    {/* ── User Profile Card ── */}
+  const dashboardRoot =
+    role === 'recruiter'
+      ? '/dashboard/recruiter'
+      : role === 'admin'
+        ? '/dashboard/admin'
+        : '/dashboard/seeker';
+
+  // Plan badge label
+  const planLabel = user?.plan
+    ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1)
+    : 'Free';
+
+  // Role display name
+  const roleDisplay =
+    {
+      seeker: 'Job Seeker',
+      recruiter: 'Recruiter',
+      admin: 'Administrator',
+    }[role] || role;
+
+  return (
     <div
-      className="mx-3 mb-4 p-3 rounded-xl"
-      style={{
-        background: T.activeItem,
-        border: `1px solid ${T.sidebarBorder}`,
-      }}
+      className="flex flex-col h-full w-full select-none"
+      style={{ background: T.sidebar, color: T.textMuted }}
     >
-      <div className="flex items-center gap-3">
-        {user?.image ? (
-          <div
-            className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden"
-            style={{ border: `2px solid ${T.purple}55` }}
-          >
-            <Image
-              src={user.image}
-              alt={user?.name || 'User'}
-              fill
-              sizes="40px"
-              className="object-cover"
-              priority
-            />
+      {/* ── Logo ── */}
+      <Link
+        href={dashboardRoot}
+        className="px-6 pt-7 pb-6 no-underline block"
+        onClick={onNavClick}
+      >
+        <span
+          className="text-2xl font-extrabold tracking-tight"
+          style={{ color: T.text }}
+        >
+          Hire<span style={{ color: T.purpleLight }}>Loop</span>
+        </span>
+      </Link>
+
+      {/* ── User Profile Card ── */}
+      <div
+        className="mx-3 mb-4 p-3 rounded-xl"
+        style={{
+          background: T.activeItem,
+          border: `1px solid ${T.sidebarBorder}`,
+        }}
+      >
+        <div className="flex items-center gap-3">
+          {user?.image ? (
+            <div
+              className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden"
+              style={{ border: `2px solid ${T.purple}55` }}
+            >
+              <Image
+                src={user.image}
+                alt={user?.name || 'User'}
+                fill
+                sizes="40px"
+                className="object-cover"
+                priority
+              />
+            </div>
+          ) : (
+            <div
+              className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold"
+              style={{
+                background: `linear-gradient(135deg,${T.purple},${T.purpleLight})`,
+                color: '#fff',
+                boxShadow: `0 0 12px ${T.purpleGlow}`,
+              }}
+            >
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+            </div>
+          )}
+
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-sm font-semibold truncate"
+              style={{ color: T.text }}
+            >
+              {isPending ? 'Loading...' : user?.name || 'User'}
+            </span>
+            <span className="text-xs capitalize" style={{ color: T.textMuted }}>
+              {roleDisplay}
+            </span>
           </div>
-        ) : (
+        </div>
+
+        {/* Plan badge - only for non-admin */}
+        {role !== 'admin' && (
           <div
-            className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold"
+            className="mt-2.5 w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest"
             style={{
-              background: `linear-gradient(135deg,${T.purple},${T.purpleLight})`,
-              color: '#fff',
-              boxShadow: `0 0 12px ${T.purpleGlow}`,
+              background: T.badge,
+              border: `1px solid ${T.badgeBorder}`,
+              color: T.textSub,
             }}
           >
-            {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+            {planLabel} Account
           </div>
         )}
 
-        <div className="flex flex-col min-w-0">
-          <span
-            className="text-sm font-semibold truncate"
-            style={{ color: T.text }}
+        {/* Admin Badge */}
+        {role === 'admin' && (
+          <div
+            className="mt-2.5 w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest"
+            style={{
+              background: `${T.purple}22`,
+              border: `1px solid ${T.purple}44`,
+              color: T.purpleLight,
+            }}
           >
-            {isPending ? 'Loading...' : user?.name || 'Alex Sterling'}
-          </span>
-          <span className="text-xs" style={{ color: T.textMuted }}>
-            Recruiter
-          </span>
-        </div>
+            Admin Access
+          </div>
+        )}
       </div>
 
-      {/* Premium badge */}
+      {/* ── Nav section label ── */}
+      <p
+        className="px-6 mb-2 text-[10px] font-semibold uppercase tracking-widest"
+        style={{ color: T.textMuted }}
+      >
+        {role === 'admin' ? 'Admin Panel' : 'Navigation'}
+      </p>
+
+      {/* ── Nav links ── */}
+      <nav className="flex flex-col gap-0.5 px-3 flex-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            onClick={onNavClick}
+            role={role}
+          />
+        ))}
+      </nav>
+
+      {/* ── Bottom version tag ── */}
       <div
-        className="mt-2.5 w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest"
+        className="mx-3 mb-4 px-3 py-2.5 rounded-xl flex items-center justify-between"
         style={{
           background: T.badge,
           border: `1px solid ${T.badgeBorder}`,
-          color: T.textSub,
         }}
       >
-        Premium Account
+        <span className="text-xs" style={{ color: T.textMuted }}>
+          HireLoop v2.0
+        </span>
+        <span
+          className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
+          style={{
+            background: `${T.purple}22`,
+            color: T.purpleLight,
+            border: `1px solid ${T.purple}44`,
+          }}
+        >
+          {role === 'admin' ? 'Admin' : planLabel}
+        </span>
       </div>
     </div>
-
-    {/* ── Nav section label ── */}
-    <p
-      className="px-6 mb-2 text-[10px] font-semibold uppercase tracking-widest"
-      style={{ color: T.textMuted }}
-    >
-      Navigation
-    </p>
-
-    {/* ── Nav links ── */}
-    <nav className="flex flex-col gap-0.5 px-3 flex-1">
-      {NAV_ITEMS.map((item) => (
-        <NavLink
-          key={item.href}
-          item={item}
-          pathname={pathname}
-          onClick={onNavClick}
-        />
-      ))}
-    </nav>
-
-    {/* ── Bottom version tag ── */}
-    <div
-      className="mx-3 mb-4 px-3 py-2.5 rounded-xl flex items-center justify-between"
-      style={{
-        background: T.badge,
-        border: `1px solid ${T.badgeBorder}`,
-      }}
-    >
-      <span className="text-xs" style={{ color: T.textMuted }}>
-        HireLoop v2.0
-      </span>
-      <span
-        className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-        style={{
-          background: `${T.purple}22`,
-          color: T.purpleLight,
-          border: `1px solid ${T.purple}44`,
-        }}
-      >
-        PRO
-      </span>
-    </div>
-  </div>
-);
+  );
+};
 
 /* ─────────────────────────────────────────
-   MAIN EXPORT
+   MAIN EXPORT — client component only
 ───────────────────────────────────────── */
 export function DashboardSidebar() {
   const { data: session, isPending } = useSession();
   const user = session?.user;
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  const role = user?.role || 'seeker';
+  const dashboardRoot =
+    role === 'recruiter'
+      ? '/dashboard/recruiter'
+      : role === 'admin'
+        ? '/dashboard/admin'
+        : '/dashboard/seeker';
 
   // Close drawer on route change
   React.useEffect(() => {
@@ -312,7 +452,7 @@ export function DashboardSidebar() {
           boxShadow: '0 2px 16px #00000055',
         }}
       >
-        <Link href="/dashboard/recruiter" className="no-underline">
+        <Link href={dashboardRoot} className="no-underline">
           <span
             className="text-lg font-extrabold tracking-tight"
             style={{ color: T.text }}

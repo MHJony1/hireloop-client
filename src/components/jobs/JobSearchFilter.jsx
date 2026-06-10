@@ -1,4 +1,3 @@
-// src/components/jobs/JobSearchFilter.jsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';

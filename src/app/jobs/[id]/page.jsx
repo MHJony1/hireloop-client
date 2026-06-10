@@ -311,16 +311,18 @@ const JobDetailsPage = async ({ params }) => {
                 </div>
 
                 {/* Apply Button - Just UI, no functionality */}
+                <Link href={`/jobs/${id}/apply`}>
                 <button
                   disabled={isExpired}
                   className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold text-white ${
                     isExpired
                       ? 'cursor-not-allowed bg-gray-700'
-                      : 'bg-gradient-to-r from-indigo-600 to-purple-600'
+                      : 'bg-linear-to-r from-indigo-600 to-purple-600'
                   }`}
                 >
                   {isExpired ? 'Position Closed' : 'Apply Now'}
                 </button>
+                </Link>
 
                 {!isExpired && (
                   <p className="mt-3 text-center text-xs text-gray-500">

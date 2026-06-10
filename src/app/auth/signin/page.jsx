@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Eye,
   EyeOff,
@@ -13,11 +13,16 @@ import {
   LogIn,
 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
+import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 const SignInPage = () => {
   const router = useRouter();
+  const { refetch } = useAuth(); // ✅ AuthContext থেকে refetch নিন
+
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
 
   // Form States
   const [formData, setFormData] = useState({
@@ -45,7 +50,6 @@ const SignInPage = () => {
       const { data, error: signInError } = await authClient.signIn.email({
         email: formData.email,
         password: formData.password,
-        callbackURL: '/',
       });
 
       if (signInError) {
@@ -57,8 +61,14 @@ const SignInPage = () => {
       }
 
       if (data) {
+        // ✅ সেশন রিফ্রেশ করুন
+        await refetch();
+
         toast.success('Welcome back! Logged in successfully. 👋');
-        router.push('/');
+
+        // ✅ পেজ রিফ্রেশ এবং রিডাইরেক্ট
+        router.refresh();
+        router.push(redirectTo);
       }
     } catch (err) {
       toast.error('An unexpected error occurred. Please try again.');
@@ -72,7 +82,13 @@ const SignInPage = () => {
     try {
       await authClient.signIn.social({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: redirectTo,
+        fetchOptions: {
+          onSuccess: async () => {
+            await refetch();
+            router.refresh();
+          },
+        },
       });
     } catch (err) {
       toast.error('Google authentication failed. Please try again.');
@@ -249,7 +265,7 @@ const SignInPage = () => {
           <p className="text-center text-zinc-500 text-xs font-medium pt-4">
             Don&apos;t have an account yet?{' '}
             <Link
-              href="/auth/signup"
+              href={`/auth/signup?redirect=${redirectTo}`}
               className="text-blue-500 hover:text-blue-400 font-semibold ml-1 cursor-pointer underline underline-offset-4 transition-colors"
             >
               Sign Up

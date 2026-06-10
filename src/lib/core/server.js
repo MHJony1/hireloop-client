@@ -1,7 +1,7 @@
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-// serverFetch ফাংশন এক্সপোর্ট করুন
+
 export const serverFetch = async (path) => {
   try {
     const res = await fetch(`${baseUrl}${path}`, {
@@ -36,13 +36,13 @@ export const serverFetch = async (path) => {
 
 
 
-export const serverMutation = async (path, data) => {
+export const serverMutation = async (path, data, method = 'POST') => {
   try {
     const fullUrl = `${baseUrl}${path}`;
     console.log('Sending data:', data); 
     
     const res = await fetch(fullUrl, {
-      method: 'POST',
+      method: method,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -51,12 +51,12 @@ export const serverMutation = async (path, data) => {
 
     const text = await res.text();
     
-    // রেসপন্স পাস করবেন কিনা চেক করুন
+  
     if (!res.ok) {
       console.error(`Mutation Error: ${res.status} for ${path}`);
       console.error('Response body:', text);
       
-      // পূর্ণ error মেসেজ দেখান
+    
       let errorMessage = `HTTP ${res.status}`;
       try {
         const errorData = JSON.parse(text);
@@ -68,7 +68,7 @@ export const serverMutation = async (path, data) => {
       throw new Error(errorMessage);
     }
 
-    // সফল রেসপন্স পার্স করুন
+  
     if (!text || text.trim() === '') {
       return { success: true, message: 'Operation completed' };
     }

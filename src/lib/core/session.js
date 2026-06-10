@@ -1,38 +1,28 @@
-// import { auth } from "../auth";
-// import { headers } from "next/headers";
-
-// export const getUserSession = async () => {
-//     const session = await auth.api.getSession({
-//         headers: await headers() // some endpoints might require headers
-//     })
-
-//     return session?.user || null;
-// }
-
-
-
-
-
-// lib/core/session.js
-import { auth } from "../auth";
-import { headers } from "next/headers";
+import { redirect } from 'next/navigation';
+import { auth } from '../auth';
+import { headers } from 'next/headers';
 
 export const getUserSession = async () => {
-    try {
-        const headersList = await headers();
-        const session = await auth.api.getSession({
-            headers: headersList
-        });
-        
-        // নিশ্চিত করুন session.user খালি না
-        if (!session || !session.user) {
-            console.log('No active session found');
-            return null;
-        }
-        
-        return session.user;
-    } catch (error) {
-        console.error('Error getting user session:', error);
-        return null;
-    }
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    console.log('Session user:', session?.user); // দেখুন role আছে কিনা
+    return session?.user || null;
+  } catch (error) {
+    console.error('Session error:', error);
+    return null;
+  }
+};
+
+export const requireRole = async (role) => {
+  const user = await getUserSession();
+  console.log('Required role:', role, 'User role:', user?.role); // debug
+  if (!user) {
+    redirect('/auth/signin');
+  }
+  if (user?.role !== role) {
+    redirect('/unauthorized');
+  }
+  return user;
 };
